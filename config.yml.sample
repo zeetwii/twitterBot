@@ -1,0 +1,5 @@
+twitter:
+  access_token: AT
+  access_token_secret: ATS
+  API_key: API
+  API_secret: S
