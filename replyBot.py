@@ -27,6 +27,8 @@ class ReplyBot:
 
         self.prevMsgs = []
 
+        self.gameData = yaml.safe_load(open("msg.yml", 'r'))
+
         try:
             self.api.verify_credentials()
             self.id = str(self.api.verify_credentials().id)
@@ -55,43 +57,47 @@ class ReplyBot:
         repeatCount = 0
 
         print("")
-        print(f"{str(len(messageList))} messages recieved since last scan:")
+        print(f"{str(len(messageList))} messages received since last scan:")
 
         for msg in messageList:
             print('')
             newIDs.append(msg.id)
             #print(str(msg.message_create))
             #self.api.delete_direct_message(msg.id)
-            time.sleep(1)
+            #time.sleep(1)
             if msg.id not in self.prevMsgs:
-                if msg.message_create['sender_id'] == self.id : # check to see if DM is from us
-                    print("its me")
-                    # Go ahead and delete the message, we don't care about our messages  
-                else:
-                    print("not me")
-                    #print(str(msg.message_create))
+                if msg.message_create['sender_id'] != self.id : # check to see if DM is from us
+                    
                     try:
-                        print(str(msg.message_create['message_data']['quick_reply_response']['metadata']))
-                        self.api.send_direct_message(msg.message_create['sender_id'], f"Thank you for selecting option {str(msg.message_create['message_data']['quick_reply_response']['metadata'])}")
-                        time.sleep(1)
-                    except KeyError:
-                        print("not a quick repsonse, sending starting message")
 
-                        options = [
-                            {
-                            "label": "I'm good",
-                            "description": "It means you're doing good",
-                            "metadata": "1"
-                            },
-                            {
-                            "label": "Not so good",
-                            "description": "It means you're not doing good",
-                            "metadata": "2"
-                            }
-                        ]
+                        pathSelect = msg.message_create['message_data']['quick_reply_response']['metadata'] # This is path set by the meta data to the quick reply.  Note messages without a quick reply will generate an error, thus the try catch
                         
-                        self.api.send_direct_message(msg.message_create['sender_id'], "Quick reply Test", quick_reply_options=options)
-                        time.sleep(1)
+                        try:
+                            optionsList = []
+                            for option in self.gameData[pathSelect]['options']:
+                                optionsList.append(self.gameData[pathSelect]['options'][option])
+                        
+                            self.api.send_direct_message(msg.message_create['sender_id'], self.gameData[pathSelect]['text'], quick_reply_options=optionsList)
+                            time.sleep(1)
+
+                        except KeyError: # if no quick reply options are set in the Path options
+                            self.api.send_direct_message(msg.message_create['sender_id'], self.gameData[pathSelect]['text'])
+                            time.sleep(1)
+                    except KeyError: # not a quick reply, so check for text
+
+                        if self.gameData['Keyword'] in str(msg.message_create['message_data']['text']).lower(): # check to see if message contains keyword
+                            print('keyword found, starting interaction')
+                            optionsList = []
+
+                            for option in self.gameData['Start']['options']:
+                                optionsList.append(self.gameData['Start']['options'][option])
+                        
+                            self.api.send_direct_message(msg.message_create['sender_id'], self.gameData['Start']['text'], quick_reply_options=optionsList)
+                            time.sleep(1)
+                        else:
+                            errorMsg = f"I'm sorry, I do not understand.  To start a new interaction, use the keyword: {self.gameData['Keyword']}.  Please note that all DMs are deleted and not monitored"
+                            self.api.send_direct_message(msg.message_create['sender_id'], errorMsg)
+                            time.sleep(1)
                 self.api.delete_direct_message(msg.id)
                 time.sleep(1)
             else:

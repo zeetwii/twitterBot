@@ -1,0 +1,29 @@
+# example yaml file for showing how messages work
+# The keyword is what is used to trigger the start of the interactions.  Use an empty string of "" to trigger on everything
+Keyword: "game"
+
+# the start message is the first message to send once the user has sent the keyword in a direct message
+Start:
+# text is the text that will be sent in the text field of the direct message
+  text: "Welcome to the start of the game, please select an option"
+  options: # This is the list of options that the user can select
+    A: # The values for the first option
+      label: "A" # The label for the option
+      description: "Option A" # The description of the option
+      metadata: "PathA" # The metadata for the option, which is used to select the next response
+    B:
+      label: "B"
+      description: "Option B"
+      metadata: "PathB"
+PathA: # This is the path from the first option
+  text: "You selected A" # The text to send in the direct message
+  options: # This is the list of options that the user can select
+    C:
+      label: "C"
+      description: "Option C"
+      metadata: "PathC"
+PathB: # This is the path from the second option
+  text: "You selected B" # The text to send
+  # Note: No options field in this message because its the end of an interaction
+PathC: # This is the path from the third option
+  text: "You selected C" # The text to send

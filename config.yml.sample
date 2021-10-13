@@ -1,3 +1,4 @@
+# example config file
 twitter:
   access_token: AT
   access_token_secret: ATS
